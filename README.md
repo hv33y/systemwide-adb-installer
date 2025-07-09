@@ -1,4 +1,4 @@
-# Systemwide_ADB_Installer
+# Systemwide ADB Installer
 
 * For Command Prompt, use:
   1. Open Command Prompt/Windows Terminal as Admin.
