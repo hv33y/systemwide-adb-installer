@@ -42,4 +42,4 @@ If you prefer to review or run the script manually:
 3. Follow the on-screen prompts to complete the setup.
 
 ## License
-This project is licensed under the [MIT License](MIT).
+This project is licensed under the [MIT License](LICENSE).
