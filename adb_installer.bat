@@ -58,4 +58,10 @@ echo  ADB is installed at: %INSTALL_DIR%
 echo ===================================================
 echo.
 echo Open a NEW PowerShell or Command Prompt window to use 'adb'.
+:: Also update PATH for this current CMD instance if run directly
+set "PATH=%PATH%;%INSTALL_DIR%"
+
+echo.
+echo Launching a ready-to-use terminal...
+start powershell -NoExit -Command "Write-Host '=== ADB Environment Ready ===' -ForegroundColor Green; adb version"
 pause
