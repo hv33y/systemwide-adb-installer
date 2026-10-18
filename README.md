@@ -14,7 +14,7 @@ Run the script directly via **Command Prompt** or **PowerShell / Windows Termina
 2. Paste and run the command below:
 
 ```cmd
-curl -o "%USERPROFILE%\Downloads\adb_installer.bat" [https://raw.githubusercontent.com/hv33y/systemwide-adb-installer/main/adb_installer.bat](https://raw.githubusercontent.com/hv33y/systemwide-adb-installer/main/adb_installer.bat) && "%USERPROFILE%\Downloads\adb_installer.bat"
+curl.exe -L -o "$env:TEMP\adb_installer.bat" "https://raw.githubusercontent.com/hv33y/systemwide-adb-installer/main/adb_installer.bat"; & "$env:TEMP\adb_installer.bat"
 ```
 
 ## Features
