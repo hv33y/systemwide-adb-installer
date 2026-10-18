@@ -1,41 +1,61 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-echo Checking for Administrator privileges...
+:: 1. Check for Administrator privileges and elevate cleanly
 net session >nul 2>&1
-if %errorLevel% neq 0 (
+if %errorlevel% neq 0 (
     echo Requesting administrative privileges...
-    powershell -Command "Start-Process cmd -ArgumentList '/c "%~f0"' -Verb RunAs"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c `\"%~f0`\"' -Verb RunAs"
     exit /b
 )
 
-title ADB SYSTEM INSTALLER
+title ADB Systemwide Installer
 
-echo Downloading ADB...
-set "DownloadDestinationADB=%~dp0platform-tools-latest-windows.zip"
-set "UnzipDestinationADB=%~dp0platform-tools-latest-windows"
-set "sourceDirectory=%~dp0ADB"
-set "url=https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+set "INSTALL_DIR=C:\adb"
+set "ZIP_FILE=%TEMP%\platform-tools.zip"
+set "URL=https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
 
-powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%url%', '%DownloadDestinationADB%')"
+echo ===================================================
+echo             ADB SYSTEMWIDE INSTALLER
+echo ===================================================
+echo.
 
-echo Unzipping and Copying...
-powershell -Command "Expand-Archive -Path '%DownloadDestinationADB%' -DestinationPath '%UnzipDestinationADB%'"
-set "sourceDirectory=%~dp0platform-tools-latest-windows\platform-tools"
-set "destinationDirectory=%~dp0ADB"
+:: 2. Create destination folder
+echo [1/4] Setting up destination at %INSTALL_DIR%...
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
-if exist "%destinationDirectory%" rd /s /q "%destinationDirectory%"
-xcopy /E /Y "%sourceDirectory%" "%destinationDirectory%"
+:: 3. Download using native curl.exe
+echo [2/4] Downloading latest Android Platform Tools...
+curl.exe -L -# -o "%ZIP_FILE%" "%URL%"
+if %errorlevel% neq 0 (
+    echo [ERROR] Download failed. Please check your internet connection.
+    pause
+    exit /b 1
+)
 
-echo Cleaning up...
-del /f /q "%DownloadDestinationADB%"
-rd /s /q "%UnzipDestinationADB%"
+:: 4. Extract using native tar.exe (bypasses Expand-Archive module errors)
+echo [3/4] Extracting platform-tools...
+tar.exe -xf "%ZIP_FILE%" -C "%INSTALL_DIR%" --strip-components=1
+if %errorlevel% neq 0 (
+    echo [ERROR] Extraction failed.
+    del /f /q "%ZIP_FILE%" >nul 2>&1
+    pause
+    exit /b 1
+)
 
-:: Adding ADB to system PATH
-for /f "tokens=2* delims= " %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path') do set "oldPath=%%B"
-set "newPath=!oldPath!;%destinationDirectory%"
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path /t REG_EXPAND_SZ /d "!newPath!" /f
+:: Clean up temporary archive
+del /f /q "%ZIP_FILE%" >nul 2>&1
 
-echo Completed Installing ADB systemwide.
-echo Launch Windows Terminal/Powershell/Command Prompt to use ADB.
+:: 5. Safely add C:\adb to System PATH without string truncation or duplicates
+echo [4/4] Configuring System PATH...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$p = [Environment]::GetEnvironmentVariable('Path', 'Machine'); if ($p -notlike '*C:\adb*') { [Environment]::SetEnvironmentVariable('Path', ($p.TrimEnd(';') + ';C:\adb'), 'Machine') }"
+
+echo.
+echo ===================================================
+echo  Installation completed successfully!
+echo  ADB is installed at: %INSTALL_DIR%
+echo ===================================================
+echo.
+echo Open a NEW PowerShell or Command Prompt window to use 'adb'.
 pause
